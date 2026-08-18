@@ -1,7 +1,3 @@
-// ===============================
-// Show / Hide Other City Field
-// ===============================
-
 const citySelect = document.getElementById("city");
 const otherCityField = document.getElementById("otherCityField");
 const otherCity = document.getElementById("otherCity");
@@ -20,9 +16,6 @@ citySelect.addEventListener("change", function () {
 
 });
 
-
-
-
 function addValidator(input, testFn, message) {
 
     input.addEventListener("input", () => {
@@ -37,7 +30,6 @@ function addValidator(input, testFn, message) {
     });
 
 }
-
 
 const namePattern = /^[A-Za-z][A-Za-z\s]*$/;
 
@@ -61,7 +53,6 @@ addValidator(
     (v) => namePattern.test(v),
     "City must start with a letter and contain English letters only."
 );
-
 
 const nationalId = document.getElementById("nationalId");
 
@@ -96,7 +87,6 @@ mobile.addEventListener("input", () => {
         return;
     }
 
-   
     const stillMatchesPrefix =
         mobilePrefix.startsWith(value) ||
         value.startsWith(mobilePrefix);
@@ -125,7 +115,6 @@ mobile.addEventListener("input", () => {
 
 });
 
-
 const email = document.getElementById("email");
 
 addValidator(
@@ -133,10 +122,6 @@ addValidator(
     (v) => !/[\u0600-\u06FF]/.test(v),
     "Please enter a valid email address using English characters only."
 );
-
-// ===============================
-// Password validation
-// ===============================
 
 const password = document.getElementById("password");
 const confirmPassword = document.getElementById("confirmPassword");
@@ -184,10 +169,6 @@ confirmPassword.addEventListener("input", () => {
     }
 
 });
-
-// ===============================
-// Show / Hide Password
-// ===============================
 
 const togglePassword =
     document.getElementById("togglePassword");
@@ -237,11 +218,10 @@ toggleConfirmPassword.addEventListener("click", () => {
 
 });
 
-
 const dobInput = document.getElementById("dob");
 const today = new Date().toISOString().split("T")[0];
 
-dobInput.setAttribute("max", today); 
+dobInput.setAttribute("max", today);
 
 dobInput.addEventListener("input", () => {
 
@@ -259,51 +239,54 @@ dobInput.addEventListener("input", () => {
 
 });
 
-// ===============================
-// Require all fields before moving to the next step
-// ===============================
-
 const personalForm =
     document.getElementById("personalForm");
 
 const nextBtn =
     document.getElementById("nextBtn");
 
-const signupError = document.getElementById("signupError");
+const signupError =
+    document.getElementById("signupError");
 
-const signupErrorText = document.getElementById("signupErrorText");
-const signupLogoutLink = document.getElementById("signupLogoutLink");
+const signupErrorText =
+    document.getElementById("signupErrorText");
+
+const signupLogoutLink =
+    document.getElementById("signupLogoutLink");
 
 function showSignupError(message, showLogoutLink = false) {
-    signupErrorText.textContent = message;
-    signupError.style.display = "block";
-    signupLogoutLink.style.display = showLogoutLink ? "inline" : "none";
+
+    if (signupErrorText) {
+        signupErrorText.textContent = message;
+    }
+
+    if (signupError) {
+        signupError.style.display = "block";
+    }
+
+    if (signupLogoutLink) {
+        signupLogoutLink.style.display =
+            showLogoutLink ? "inline" : "none";
+    }
+
 }
 
 if (signupLogoutLink) {
-    signupLogoutLink.addEventListener("click", async (e) => {
-        e.preventDefault();
-        await sb.auth.signOut();
-        window.location.reload();
-    });
+
+    signupLogoutLink.addEventListener(
+        "click",
+        async (e) => {
+
+            e.preventDefault();
+
+            await sb.auth.signOut();
+
+            window.location.reload();
+
+        }
+    );
+
 }
-
-
-(async function warnIfAlreadyLoggedIn() {
-    const { data: { session } } = await sb.auth.getSession();
-
-    if (session) {
-        showSignupError(
-            `You're currently logged in as ${session.user.email}.`,
-            true
-        );
-        nextBtn.disabled = true;
-    }
-})();
-
-// ===============================
-// Restore saved Step 1 data
-// ===============================
 
 const savedStep1 = JSON.parse(
     sessionStorage.getItem("wizard_step1") || "{}"
@@ -311,19 +294,33 @@ const savedStep1 = JSON.parse(
 
 if (Object.keys(savedStep1).length > 0) {
 
-    firstName.value = savedStep1.first_name || "";
-    lastName.value = savedStep1.last_name || "";
-    nationalId.value = savedStep1.national_id || "";
-    email.value = savedStep1.email || "";
-    mobile.value = savedStep1.mobile || "";
-    dobInput.value = savedStep1.dob || "";
-    citySelect.value = savedStep1.city || "";
+    firstName.value =
+        savedStep1.first_name || "";
+
+    lastName.value =
+        savedStep1.last_name || "";
+
+    nationalId.value =
+        savedStep1.national_id || "";
+
+    email.value =
+        savedStep1.email || "";
+
+    mobile.value =
+        savedStep1.mobile || "";
+
+    dobInput.value =
+        savedStep1.dob || "";
+
+    citySelect.value =
+        savedStep1.city || "";
 
     if (savedStep1.gender) {
 
-        const genderInput = personalForm.querySelector(
-            `input[name="gender"][value="${savedStep1.gender}"]`
-        );
+        const genderInput =
+            personalForm.querySelector(
+                `input[name="gender"][value="${savedStep1.gender}"]`
+            );
 
         if (genderInput) {
             genderInput.checked = true;
@@ -335,7 +332,9 @@ if (Object.keys(savedStep1).length > 0) {
 
         otherCityField.style.display = "flex";
         otherCity.required = true;
-        otherCity.value = savedStep1.other_city || "";
+
+        otherCity.value =
+            savedStep1.other_city || "";
 
     } else {
 
@@ -346,9 +345,114 @@ if (Object.keys(savedStep1).length > 0) {
 
 }
 
+let returningWithSameAccount = false;
+
+async function checkReturningAccount() {
+
+    const {
+        data: { session }
+    } = await sb.auth.getSession();
+
+    if (!session) {
+        return;
+    }
+
+    const loggedInEmail =
+        session.user.email
+            ?.trim()
+            .toLowerCase();
+
+    const savedEmail =
+        savedStep1.email
+            ?.trim()
+            .toLowerCase();
+
+    if (
+        savedEmail &&
+        loggedInEmail === savedEmail
+    ) {
+
+        returningWithSameAccount = true;
+
+        password.required = false;
+        confirmPassword.required = false;
+
+        password.value = "";
+        confirmPassword.value = "";
+
+        password.setCustomValidity("");
+        confirmPassword.setCustomValidity("");
+
+        password.placeholder =
+            "Account already created";
+
+        confirmPassword.placeholder =
+            "Account already created";
+
+        if (signupError) {
+            signupError.style.display = "none";
+        }
+
+        if (nextBtn) {
+            nextBtn.disabled = false;
+        }
+
+    }
+
+}
+
+checkReturningAccount();
+
+function saveStep1Data(normalizedEmail) {
+
+    const step1Data = {
+
+        first_name:
+            firstName.value.trim(),
+
+        last_name:
+            lastName.value.trim(),
+
+        national_id:
+            nationalId.value.trim(),
+
+        mobile:
+            mobile.value.trim(),
+
+        dob:
+            dobInput.value,
+
+        gender:
+            personalForm.querySelector(
+                'input[name="gender"]:checked'
+            )?.value || "",
+
+        city:
+            citySelect.value,
+
+        other_city:
+            citySelect.value === "Other"
+                ? otherCity.value.trim()
+                : null,
+
+        email:
+            normalizedEmail
+
+    };
+
+    sessionStorage.setItem(
+        "wizard_step1",
+        JSON.stringify(step1Data)
+    );
+
+}
+
+
 nextBtn.addEventListener("click", async () => {
 
-    validatePasswordMatch();
+    if (!returningWithSameAccount) {
+        validatePasswordMatch();
+    }
 
     if (!personalForm.checkValidity()) {
 
@@ -357,91 +461,185 @@ nextBtn.addEventListener("click", async () => {
 
     }
 
-    signupError.style.display = "none";
-    nextBtn.disabled = true;
-    nextBtn.querySelector("span").textContent = "Please wait...";
+    if (signupError) {
+        signupError.style.display = "none";
+    }
 
-    const { data: { session: existingSession } } = await sb.auth.getSession();
+    nextBtn.disabled = true;
+
+    const nextText =
+        nextBtn.querySelector("span");
+
+    if (nextText) {
+        nextText.textContent =
+            "Please wait...";
+    }
+
+    const normalizedEmail =
+        email.value
+            .trim()
+            .toLowerCase();
+
+    const {
+        data: { session: existingSession }
+    } = await sb.auth.getSession();
 
     if (existingSession) {
+
+        const loggedInEmail =
+            existingSession.user.email
+                ?.trim()
+                .toLowerCase();
+
+        if (
+            loggedInEmail === normalizedEmail
+        ) {
+
+            saveStep1Data(
+                normalizedEmail
+            );
+
+            window.location.href =
+                "academic.html";
+
+            return;
+
+        }
+
         showSignupError(
             `You're currently logged in as ${existingSession.user.email}.`,
             true
         );
-        nextBtn.disabled = false;
-        nextBtn.querySelector("span").textContent = "Next";
-        return;
-    }
-    const normalizedEmail =
-        email.value.trim().toLowerCase();
 
-    const { data, error } = await sb.auth.signUp({
-        email: normalizedEmail,
-        password: password.value,
+        nextBtn.disabled = false;
+
+        if (nextText) {
+            nextText.textContent = "Next";
+        }
+
+        return;
+
+    }
+
+    const {
+        data,
+        error
+    } = await sb.auth.signUp({
+
+        email:
+            normalizedEmail,
+
+        password:
+            password.value,
+
         options: {
+
             data: {
-                full_name: `${firstName.value.trim()} ${lastName.value.trim()}`,
-            },
-        },
+
+                full_name:
+                    `${firstName.value.trim()} ${lastName.value.trim()}`
+
+            }
+
+        }
+
     });
 
+
     if (error) {
+
         showSignupError(
-            error.message.includes("already registered")
+
+            error.message.includes(
+                "already registered"
+            )
                 ? "This email is already registered. Please log in instead."
                 : error.message
+
         );
+
         nextBtn.disabled = false;
-        nextBtn.querySelector("span").textContent = "Next";
+
+        if (nextText) {
+            nextText.textContent = "Next";
+        }
+
         return;
+
     }
 
+
     if (!data.session) {
+
         showSignupError(
             "Account created! Please check your email and confirm your address before continuing, then log in from the Login page."
         );
+
         nextBtn.disabled = false;
-        nextBtn.querySelector("span").textContent = "Next";
+
+        if (nextText) {
+            nextText.textContent = "Next";
+        }
+
         return;
+
     }
 
-    const currentUser = data.user;
+    const currentUser =
+        data.user;
 
-    
     if (currentUser) {
 
-        const { error: profileError } = await sb
+        const {
+            error: profileError
+        } = await sb
             .from("profiles")
             .update({
-                phone: mobile.value.trim(),
-                dob: dobInput.value,
-                gender: personalForm.querySelector('input[name="gender"]:checked')?.value || null,
-                national_id: nationalId.value.trim(),
-                city: citySelect.value,
-                other_city: citySelect.value === "Other" ? otherCity.value.trim() : null,
+
+                phone:
+                    mobile.value.trim(),
+
+                dob:
+                    dobInput.value,
+
+                gender:
+                    personalForm.querySelector(
+                        'input[name="gender"]:checked'
+                    )?.value || null,
+
+                national_id:
+                    nationalId.value.trim(),
+
+                city:
+                    citySelect.value,
+
+                other_city:
+                    citySelect.value === "Other"
+                        ? otherCity.value.trim()
+                        : null
+
             })
-            .eq("id", currentUser.id);
+            .eq(
+                "id",
+                currentUser.id
+            );
 
         if (profileError) {
-            console.error("Failed to update profile:", profileError);
+
+            console.error(
+                "Failed to update profile:",
+                profileError
+            );
+
         }
 
     }
 
-    const step1Data = {
-        first_name: firstName.value.trim(),
-        last_name: lastName.value.trim(),
-        national_id: nationalId.value.trim(),
-        mobile: mobile.value.trim(),
-        dob: dobInput.value,
-        gender: personalForm.querySelector('input[name="gender"]:checked')?.value || "",
-        city: citySelect.value,
-        other_city: citySelect.value === "Other" ? otherCity.value.trim() : null,
-        email: normalizedEmail,
-    };
+    saveStep1Data(
+        normalizedEmail
+    );
 
-    sessionStorage.setItem("wizard_step1", JSON.stringify(step1Data));
-
-    window.location.href = "academic.html";
+    window.location.href =
+        "academic.html";
 
 });
